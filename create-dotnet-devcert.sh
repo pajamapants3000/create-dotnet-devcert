@@ -1,4 +1,26 @@
 #!/bin/bash
+
+while getopts p: flag
+do
+	case "${flag}" in
+		p) password=${OPTARG};;
+	esac
+done
+
+if [ -z "$password" ]
+then
+	echo "This script will create a trusted CA-cert! You really should use a secure password!"
+	echo "Are you sure you want to continue? (y to continue)"
+	read continue
+
+	if [ "$continue" != "y" ]
+	then
+		echo "Exiting..."
+		exit 0
+	fi
+fi
+
+
 TMP_PATH=/var/tmp/localhost-dev-cert
 if [ ! -d $TMP_PATH ]; then
     mkdir $TMP_PATH
@@ -48,7 +70,7 @@ function configure_nssdb() {
 }
 
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $KEYFILE -out $CRTFILE -config $CONF_PATH --passout pass:
-openssl pkcs12 -export -out $PFXFILE -inkey $KEYFILE -in $CRTFILE --passout pass:
+openssl pkcs12 -export -out $PFXFILE -inkey $KEYFILE -in $CRTFILE --passout pass:${password}
 
 for NSSDB in ${NSSDB_PATHS[@]}; do
     if [ -d "$NSSDB" ]; then
@@ -60,5 +82,6 @@ sudo rm /etc/ssl/certs/dotnet-devcert.pem
 sudo cp $CRTFILE "/usr/local/share/ca-certificates"
 sudo update-ca-certificates
 
-dotnet dev-certs https --clean --import $PFXFILE -p ""
+dotnet dev-certs https --clean --import $PFXFILE -p "${password}"
+sudo cp -v $PFXFILE $CRTFILE $HOME/.aspnet/https/
 rm -R $TMP_PATH
