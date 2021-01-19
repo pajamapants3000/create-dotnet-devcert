@@ -69,7 +69,7 @@ function configure_nssdb() {
     certutil -d sql:$1 -A -t "CP,," -n dotnet-devcert -i $CRTFILE
 }
 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $KEYFILE -out $CRTFILE -config $CONF_PATH --passout pass:
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $KEYFILE -out $CRTFILE -config $CONF_PATH --passout pass:${password}
 openssl pkcs12 -export -out $PFXFILE -inkey $KEYFILE -in $CRTFILE --passout pass:${password}
 
 for NSSDB in ${NSSDB_PATHS[@]}; do
